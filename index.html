@@ -1,0 +1,477 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>自由研究テーマをさがそう！</title>
+    <style>
+        body {
+            background-color: #f0f8ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Comic Sans MS', Arial, sans-serif;
+            color: #333;
+        }
+        button {
+            margin: 15px;
+            padding: 15px;
+            font-size: 22px;
+            border-radius: 10px;
+            background-color: #ff6347;
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+        button:hover {
+            background-color: #ff4500;
+        }
+        #resetBtn {
+            background-color: #20b2aa;
+        }
+        #resetBtn:hover {
+            background-color: #008b8b;
+        }
+        #theme {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 24px;
+            color: #ff1493;
+            font-weight: bold;
+            max-width: 600px;
+        }
+        .question-container {
+            margin: 20px 0;
+            text-align: center;
+            background-color: #fffacd;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.1);
+            max-width: 500px;
+        }
+        .question-container {
+            display: none;
+        }
+        .question-container.active {
+            display: block;
+        }
+        h1, h3 {
+            color: #4682b4;
+            font-size: 26px;
+        }
+        h1 {
+            font-size: 32px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>自由研究テーマをさがそう！</h1>
+    <div id="question1" class="question-container active">
+        <h3>質問1: 外で遊ぶの好き？それともお部屋で何かする方が好き？</h3>
+        <button onclick="answerQuestion(1, 'outdoor')">外で遊ぶ</button>
+        <button onclick="answerQuestion(1, 'indoor')">お部屋</button>
+    </div>
+    <div id="question2" class="question-container">
+        <h3>質問2: むかしのことが知りたい？それとも今のことが知りたい？</h3>
+        <button onclick="answerQuestion(2, 'past')">むかし</button>
+        <button onclick="answerQuestion(2, 'modern')">今</button>
+    </div>
+    <div id="question3" class="question-container">
+        <h3>質問3: 絵や工作をつくるの好き？それともじっくり見たり考える方が好き？</h3>
+        <button onclick="answerQuestion(3, 'create')">つくる</button>
+        <button onclick="answerQuestion(3, 'observe')">見る・考える</button>
+    </div>
+    <div id="question4" class="question-container">
+        <h3>質問4: 体を動かすの好き？それとも頭をつかうのが好き？</h3>
+        <button onclick="answerQuestion(4, 'physical')">体を動かす</button>
+        <button onclick="answerQuestion(4, 'mental')">頭をつかう</button>
+    </div>
+    <div id="question5" class="question-container">
+        <h3>質問5: 一人で何かするのが好き？それとも友達と一緒がいい？</h3>
+        <button onclick="answerQuestion(5, 'solo')">一人</button>
+        <button onclick="answerQuestion(5, 'group')">友達と一緒</button>
+    </div>
+    <div id="question6" class="question-container">
+        <h3>質問6: 本で調べるのが好き？それとも実際にやってみるのが好き？</h3>
+        <button onclick="answerQuestion(6, 'theory')">本で調べる</button>
+        <button onclick="answerQuestion(6, 'practice')">やってみる</button>
+    </div>
+    <div id="question7" class="question-container">
+        <h3>質問7: 動物や植物に興味ある？それとも人や町に興味ある？</h3>
+        <button onclick="answerQuestion(7, 'nature')">動物・植物</button>
+        <button onclick="answerQuestion(7, 'culture')">人・町</button>
+    </div>
+    <div id="question8" class="question-container">
+        <h3>質問8: 食べ物のことが知りたい？それともロボットや機械が好き？</h3>
+        <button onclick="answerQuestion(8, 'food')">食べ物</button>
+        <button onclick="answerQuestion(8, 'tech')">ロボット・機械</button>
+    </div>
+    <div id="question9" class="question-container">
+        <h3>質問9: 簡単なことが好き？それとも難しいことに挑戦したい？</h3>
+        <button onclick="answerQuestion(9, 'simple')">簡単</button>
+        <button onclick="answerQuestion(9, 'complex')">難しい</button>
+    </div>
+    <div id="question10" class="question-container">
+        <h3>質問10: 近くのことに興味ある？それとも遠くの世界や宇宙が知りたい？</h3>
+        <button onclick="answerQuestion(10, 'local')">近くのこと</button>
+        <button onclick="answerQuestion(10, 'global')">遠くの世界・宇宙</button>
+    </div>
+    <div id="theme">ここにピッタリのテーマがでるよ！</div>
+    <button id="resetBtn" onclick="resetAll()">もう一度やってみる</button>
+
+    <script>
+        // テーマデータ（固定）
+        const themes = {
+            "かがく": [
+                "星のならびかた - 夜空で星をみてみよう",
+                "水がどうやって空にあがるか - 水をあたためてみる",
+                "じしゃくのふしぎ - じしゃくで何がくっつく？",
+                "色のまぜあわせ - 絵の具をまぜてみる",
+                "でんきのながれ - 電池でライトをともす",
+                "シャボン玉のひみつ - シャボン玉をふくらます",
+                "ロケットのとびかた - ストローでロケットをつくる",
+                "音がきこえるわけ - ゴムで音をだす",
+                "バネのちから - バネのおもちゃをうごかす",
+                "氷がとけるはやさ - 氷をいろいろな場所でおく",
+                "空気のちから - 風船をふくらます",
+                "光のまがりかた - ガラスと水で光をみる",
+                "スライムの作り方 - スライムをこねる",
+                "紙のつよさ - 紙をちがう形にしてみる",
+                "影のうごき - ライトで影をうごかす"
+            ],
+            "れきし": [
+                "むかしのお城のくらし - お城の絵をかく",
+                "ピラミッドはどうやってつくった？ - ブロックでピラミッドをつくる",
+                "むかしと今のちがい - むかしの写真をみる",
+                "侍のせいかつ - 刀やよろいの絵をかく",
+                "むかしの道具 - むかしの道具を調べる",
+                "お祭りのはじまり - お祭りの話をきく",
+                "むかしの服 - むかしの服の絵をかく",
+                "忍者のひみつ - 忍者の道具を調べる",
+                "むかしの学校 - じいちゃんばあちゃんにきく",
+                "昔話のひみつ - 昔話をかきなおす",
+                "むかしのごはん - むかしの食べ物を調べる",
+                "むかしの遊び - むかしの遊びをやってみる",
+                "お寺や神社のひみつ - 近くのお寺をみる",
+                "むかしの乗り物 - むかしの車や馬を調べる",
+                "むかしの手紙 - むかしの手紙をかく"
+            ],
+            "びじゅつ": [
+                "いろんなくにの絵 - いろんな絵をまねする",
+                "おりがみのひみつ - 新しいおりがみをつくる",
+                "音楽のたのしさ - 楽器の音をきく",
+                "粘土でつくるどうぶつ - 粘土で動物をつくる",
+                "まんがのかきかた - 簡単なまんがをかく",
+                "色のまぜかた - 絵の具で色をつくる",
+                "ダンスのうごき - ダンスをおどってみる",
+                "ペットボトルで工作 - ペットボトルでおもちゃ",
+                "かみでつくるおもちゃ - 紙で飛行機をつくる",
+                "写真のとりかた - カメラで写真をとる",
+                "布でつくる人形 - 布で小さな人形をつくる",
+                "ビーズのアクセサリー - ビーズでかざりをつくる",
+                "季節の絵をかく - 春や夏の絵をかく",
+                "紙粘土の工作 - 紙粘土で形をつくる",
+                "色水の実験 - 色水で模様をつくる"
+            ],
+            "しぜん": [
+                "近くの木や草 - 木の葉っぱをあつめる",
+                "雨のひみつ - 雨の量をはかる",
+                "川にいる生き物 - 川で生き物をみる",
+                "てんとう虫のせいかつ - てんとう虫をみる",
+                "鳥のすみか - 鳥の巣をさがす",
+                "石の種類 - 石をあつめてみる",
+                "雲のかたち - 雲の絵をかく",
+                "木の葉のちがい - 葉っぱをくらべる",
+                "海の生き物 - 海の貝をあつめる",
+                "お天気のきろく - 天気を毎日かく",
+                "ありの巣のひみつ - ありの動きをみる",
+                "花の色のちがい - 花の色を調べる",
+                "土の中の生き物 - 土をほってみる",
+                "かぜのつよさ - かぜの強さをはかる",
+                "種の育ちかた - 種をまいてみる"
+            ],
+            "ぎじゅつ": [
+                "紙ひこうきのつくりかた - 紙ひこうきをとばす",
+                "簡単なゲームのつくりかた - ゲームをかんがえる",
+                "おもちゃのうごきかた - おもちゃをうごかす",
+                "ロボットのうごき - ロボットの絵をかく",
+                "風車のつくりかた - 紙で風車をつくる",
+                "でんきのつくりかた - 電池で動くおもちゃ",
+                "プログラミングのたのしさ - 簡単なコードをかく",
+                "ゴムでうごくおもちゃ - ゴムで車をつくる",
+                "ペットボトルのロケット - ロケットをとばす",
+                "光るおもちゃのつくりかた - LEDで光る工作",
+                "ストローでつくる笛 - ストローで音をだす",
+                "紙コップの電話 - 紙コップで話す",
+                "ゴム鉄砲のつくりかた - ゴム鉄砲をつくる",
+                "じしゃくの車 - じしゃくで車をうごかす",
+                "ペットボトルの船 - 水にうかぶ船をつくる"
+            ],
+            "スポーツ": [
+                "サッカーのボールのけりかた - ボールをける練習",
+                "野球のボールのなげかた - ボールをなげる",
+                "水泳のうごき - 水泳のポーズをみる",
+                "かけっこのコツ - 速く走る方法を調べる",
+                "自転車の乗りかた - 自転車の動きをみる",
+                "バスケットのシュート - シュートの練習",
+                "卓球のうつわざ - 卓球のボールをうつ",
+                "体そうのひみつ - 体そうのうごきをみる",
+                "なわとびの技 - なわとびをやってみる",
+                "ボールのバウンド - ボールの跳ね方をみる",
+                "フラフープのまわしかた - フラフープをまわす",
+                "ドッチボールのルール - ドッチボールをする",
+                "けんけんぱの遊びかた - けんけんぱをためす",
+                "ゴムとびの技 - ゴムとびをやってみる",
+                "シャトルのうつわざ - バドミントンをうつ"
+            ],
+            "たべもの": [
+                "おにぎりのつくりかた - おにぎりをつくる",
+                "ジュースのちがい - ジュースを飲みくらべ",
+                "お菓子のつくりかた - クッキーをつくる",
+                "パンのひみつ - パンの作り方を調べる",
+                "くだものの種類 - くだものをくらべる",
+                "やさいの育ちかた - やさいを育てる",
+                "おべんとうのひみつ - おべんとうをつくる",
+                "みそのつくりかた - みその話をきく",
+                "アイスのとけかた - アイスをとかす",
+                "ごはんのひみつ - ごはんの作り方を調べる",
+                "フルーツの切りかた - フルーツをきってみる",
+                "お茶の味のちがい - お茶を飲みくらべ",
+                "スープのつくりかた - スープをつくる",
+                "おかしのパッケージ - おかしの袋を調べる",
+                "給食のメニュー - 給食のひみつを調べる"
+            ],
+            "まちや人": [
+                "近くのお祭り - お祭りをみる",
+                "お店のひみつ - お店の中を調べる",
+                "まちの地図 - まちの地図をかく",
+                "学校のルール - 学校のルールを調べる",
+                "バスや電車のうごき - バスの動きをみる",
+                "ゴミの行く先 - ゴミをわける",
+                "まちのしごと - まちの仕事を調べる",
+                "人のやさしさ - やさしいことをかく",
+                "道のひみつ - 道の看板をみる",
+                "まちのイベント - イベントのポスターをみる",
+                "まちの音 - まちの音をきく",
+                "公園の遊び場 - 公園の遊具を調べる",
+                "まちの木 - まちの木をみる",
+                "信号のひみつ - 信号のうごきをみる",
+                "まちの建物 - 建物の形をかく"
+            ],
+            "あそび": [
+                "かくれんぼのコツ - かくれんぼをやってみる",
+                "けん玉の技 - けん玉をやってみる",
+                "トランプの遊びかた - トランプで遊ぶ",
+                "おはじきのひみつ - おはじきで遊ぶ",
+                "シャボン玉の遊び - シャボン玉をつくる",
+                "凧あげのやりかた - 凧をあげる",
+                "ボードゲームのたのしさ - ボードゲームをする",
+                "なぞなぞのつくりかた - なぞなぞをつくる",
+                "あやとりの技 - あやとりをやってみる",
+                "ビー玉のころがしかた - ビー玉で遊ぶ",
+                "ゴムとびの遊び - ゴムとびをためす",
+                "紙飛行機レース - 紙飛行機をきそう",
+                "石けりのルール - 石けりで遊ぶ",
+                "ハンカチ落としのひみつ - ハンカチ落としをやる",
+                "カルタのつくりかた - カルタをつくる"
+            ]
+        };
+
+        let answers = [];
+
+        // 質問に答える
+        function answerQuestion(step, answer) {
+            answers[step - 1] = answer;
+            document.getElementById(`question${step}`).classList.remove("active");
+            if (step < 10) {
+                document.getElementById(`question${step + 1}`).classList.add("active");
+            } else {
+                suggestTheme();
+            }
+        }
+
+        // テーマを提案
+        function suggestTheme() {
+            const categoryScores = {
+                "かがく": 0,
+                "れきし": 0,
+                "びじゅつ": 0,
+                "しぜん": 0,
+                "ぎじゅつ": 0,
+                "スポーツ": 0,
+                "たべもの": 0,
+                "まちや人": 0,
+                "あそび": 0
+            };
+
+            // 回答に基づいてポイントを加算
+            if (answers[0] === "outdoor") {
+                categoryScores["しぜん"] += 2;
+                categoryScores["スポーツ"] += 2;
+                categoryScores["あそび"] += 2;
+            } else {
+                categoryScores["かがく"] += 1;
+                categoryScores["びじゅつ"] += 1;
+                categoryScores["ぎじゅつ"] += 1;
+            }
+
+            if (answers[1] === "past") {
+                categoryScores["れきし"] += 2;
+                categoryScores["まちや人"] += 1;
+            } else {
+                categoryScores["かがく"] += 1;
+                categoryScores["ぎじゅつ"] += 1;
+                categoryScores["スポーツ"] += 1;
+            }
+
+            if (answers[2] === "create") {
+                categoryScores["びじゅつ"] += 2;
+                categoryScores["ぎじゅつ"] += 1;
+                categoryScores["たべもの"] += 1;
+                categoryScores["あそび"] += 1;
+            } else {
+                categoryScores["かがく"] += 1;
+                categoryScores["しぜん"] += 1;
+                categoryScores["まちや人"] += 1;
+            }
+
+            if (answers[3] === "physical") {
+                categoryScores["スポーツ"] += 2;
+                categoryScores["しぜん"] += 1;
+                categoryScores["あそび"] += 2;
+            } else {
+                categoryScores["かがく"] += 1;
+                categoryScores["れきし"] += 1;
+                categoryScores["まちや人"] += 1;
+            }
+
+            if (answers[4] === "solo") {
+                categoryScores["かがく"] += 1;
+                categoryScores["びじゅつ"] += 1;
+                categoryScores["しぜん"] += 1;
+            } else {
+                categoryScores["まちや人"] += 2;
+                categoryScores["スポーツ"] += 1;
+                categoryScores["あそび"] += 1;
+            }
+
+            if (answers[5] === "theory") {
+                categoryScores["かがく"] += 1;
+                categoryScores["れきし"] += 1;
+                categoryScores["まちや人"] += 1;
+            } else {
+                categoryScores["ぎじゅつ"] += 1;
+                categoryScores["びじゅつ"] += 1;
+                categoryScores["スポーツ"] += 1;
+                categoryScores["あそび"] += 1;
+            }
+
+            if (answers[6] === "nature") {
+                categoryScores["しぜん"] += 2;
+                categoryScores["かがく"] += 1;
+            } else {
+                categoryScores["まちや人"] += 1;
+                categoryScores["れきし"] += 1;
+                categoryScores["びじゅつ"] += 1;
+            }
+
+            if (answers[7] === "food") {
+                categoryScores["たべもの"] += 2;
+                categoryScores["かがく"] += 1;
+            } else {
+                categoryScores["ぎじゅつ"] += 2;
+                categoryScores["かがく"] += 1;
+            }
+
+            if (answers[8] === "simple") {
+                categoryScores["しぜん"] += 1;
+                categoryScores["たべもの"] += 1;
+                categoryScores["あそび"] += 1;
+            } else {
+                categoryScores["かがく"] += 1;
+                categoryScores["ぎじゅつ"] += 1;
+                categoryScores["まちや人"] += 1;
+            }
+
+            if (answers[9] === "local") {
+                categoryScores["まちや人"] += 1;
+                categoryScores["たべもの"] += 1;
+                categoryScores["しぜん"] += 1;
+                categoryScores["あそび"] += 1;
+            } else {
+                categoryScores["かがく"] += 1;
+                categoryScores["れきし"] += 1;
+                categoryScores["ぎじゅつ"] += 1;
+            }
+
+            // 最も高いスコアのカテゴリを選択
+            let maxScore = -1;
+            let selectedCategory = "かがく";
+            for (const category in categoryScores) {
+                if (categoryScores[category] > maxScore) {
+                    maxScore = categoryScores[category];
+                    selectedCategory = category;
+                }
+            }
+
+            const themeList = themes[selectedCategory] || [];
+            if (themeList.length === 0) {
+                document.getElementById("theme").innerText = `${selectedCategory} にはテーマがないよ。`;
+                return;
+            }
+            const randomTheme = themeList[Math.floor(Math.random() * themeList.length)];
+            document.getElementById("theme").innerText = `ピッタリのテーマ: ${randomTheme} （${selectedCategory}）`;
+        }
+
+        // すべてリセット
+        function resetAll() {
+            answers = [];
+            document.getElementById("theme").innerText = "ここにピッタリのテーマがでるよ！";
+            for (let i = 1; i <= 10; i++) {
+                document.getElementById(`question${i}`).classList.remove("active");
+            }
+            document.getElementById("question1").classList.add("active");
+        }
+    </script>
+</body>
+</html>
